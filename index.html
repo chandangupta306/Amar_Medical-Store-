@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Dawa India Pharmacy</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+	    <!-- Yeh script sabse upar honi chahiye -->
+	    <script>
+	        if (localStorage.getItem("isLoggedIn") !== "true") {
+	            window.location.href = "login.html";
+	        }
+	    </script>
+
+	    <!-- Baaki CSS links aur styles yahan rahenge -->
+	    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: #f4f7fe; 
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(13, 110, 253, 0.08) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.08) 0px, transparent 50%),
+                url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 100 100" opacity="0.035"><path fill="%230f172a" d="M30,20 h10 v10 h-10 z M35,15 v20 M15,60 a8,8 0 0,1 16,0 v15 a8,8 0 0,1 -16,0 z M70,30 a10,10 0 1,0 0,20 a10,10 0 1,0 0,-20 M75,70 l10,-10 l5,5 l-10,10 z"/></svg>');
+            background-attachment: fixed;
+            color: #1e293b; 
+            min-height: 100vh;
+        }
+
+        .custom-navbar { 
+            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%); 
+            box-shadow: 0 4px 20px rgba(13, 110, 253, 0.2);
+        }
+
+        .nav-link {
+            transition: all 0.2s ease;
+            border-radius: 8px;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .dash-card {
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .dash-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 18px 35px rgba(13, 110, 253, 0.1);
+            border-color: rgba(13, 110, 253, 0.3);
+            background: #ffffff;
+        }
+
+        .icon-box {
+            width: 58px;
+            height: 58px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1.25rem;
+            transition: all 0.3s ease;
+        }
+
+        .icon-blue { background: #e0edff; color: #0d6efd; }
+        .icon-green { background: #d1e7dd; color: #198754; }
+        .icon-purple { background: #f3e8ff; color: #8936d5; }
+        .icon-orange { background: #ffe6d5; color: #fd7e14; }
+
+        .dash-card:hover .icon-box {
+            transform: scale(1.08);
+        }
+
+        .btn-dash {
+            border-radius: 12px;
+            font-weight: 600;
+            padding: 0.65rem 1.2rem;
+            transition: all 0.25s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            border: 1px solid #cbd5e1;
+            background: #ffffff;
+            color: #334155;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+        }
+
+        .btn-dash:hover {
+            border-color: #0d6efd;
+            background: #0d6efd;
+            color: #ffffff;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(13, 110, 253, 0.25);
+        }
+
+        .stat-badge {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.35em 0.75em;
+            border-radius: 50rem;
+        }
+
+        .quick-stat-box {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navigation Bar -->
+<nav class="navbar navbar-expand-lg navbar-dark custom-navbar py-2 px-3 sticky-top">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold" href="index.html">
+            <i class="fa-solid fa-prescription-bottle-medical me-2"></i> Amar Medical Store
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto align-items-lg-center gap-1">
+                <li class="nav-item"><a class="nav-link active fw-bold px-3 py-2" href="index.html"><i class="fa-solid fa-house me-1"></i> Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link text-white px-3 py-2" href="billing.html"><i class="fa-solid fa-file-invoice-dollar me-1"></i> Quick Billing</a></li>
+                <li class="nav-item"><a class="nav-link text-white px-3 py-2" href="stock.html"><i class="fa-solid fa-boxes-stacked me-1"></i> Stock Inventory</a></li>
+                <li class="nav-item"><a class="nav-link text-white px-3 py-2" href="reports.html"><i class="fa-solid fa-chart-line me-1"></i> Sales Reports</a></li>
+                <li class="nav-item ms-lg-2 mt-2 mt-lg-0">
+                    <a class="btn btn-danger btn-sm px-3 py-2 fw-bold text-white d-inline-flex align-items-center gap-2 rounded-2 shadow-sm" href="login.html">
+                        <i class="fa-solid fa-right-from-bracket"></i> Logout
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Main Container -->
+<div class="container py-4">
+    <!-- Title Header -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <h3 class="fw-bold mb-1"><i class="fa-solid fa-clinic-medical text-primary me-2"></i>Dawa India Pharmacy</h3>
+            <p class="text-muted small mb-0">Manage billing, inventory stock and view store reports seamlessly.</p>
+        </div>
+        <div>
+            <span class="badge bg-white text-dark border p-2 d-flex align-items-center gap-2 rounded-3 shadow-sm">
+                <i class="fa-solid fa-circle text-success" style="font-size: 8px;"></i> System Online
+            </span>
+        </div>
+    </div>
+
+    <!-- Quick Overview Widgets -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="quick-stat-box p-3 d-flex flex-row align-items-center gap-3">
+                <div class="icon-box icon-blue mb-0" style="width: 46px; height: 46px; font-size: 1.1rem;">
+                    <i class="fa-solid fa-receipt"></i>
+                </div>
+                <div>
+                    <span class="text-muted small fw-semibold">Quick Access</span>
+                    <h6 class="fw-bold mb-0">Tax Billing System</h6>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="quick-stat-box p-3 d-flex flex-row align-items-center gap-3">
+                <div class="icon-box icon-green mb-0" style="width: 46px; height: 46px; font-size: 1.1rem;">
+                    <i class="fa-solid fa-pills"></i>
+                </div>
+                <div>
+                    <span class="text-muted small fw-semibold">Stock Monitoring</span>
+                    <h6 class="fw-bold mb-0">Expiry & Low Alerts</h6>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="quick-stat-box p-3 d-flex flex-row align-items-center gap-3">
+                <div class="icon-box icon-purple mb-0" style="width: 46px; height: 46px; font-size: 1.1rem;">
+                    <i class="fa-solid fa-chart-column"></i>
+                </div>
+                <div>
+                    <span class="text-muted small fw-semibold">Analytics</span>
+                    <h6 class="fw-bold mb-0">Day-by-Day Revenue</h6>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Action Cards -->
+    <div class="row g-4">
+        <div class="col-md-6 col-lg-3">
+            <div class="card dash-card p-4 h-100 d-flex flex-column justify-content-between">
+                <div>
+                    <div class="icon-box icon-blue">
+                        <i class="fa-solid fa-file-invoice-dollar"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Billing System</h5>
+                    <span class="stat-badge bg-primary-subtle text-primary mb-2 d-inline-block">Fast POS</span>
+                    <p class="text-muted small">Create fast tax invoices with barcode scan & automatic print options.</p>
+                </div>
+                <div class="mt-3">
+                    <a href="billing.html" class="btn btn-dash">
+                        Open Billing <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card dash-card p-4 h-100 d-flex flex-column justify-content-between">
+                <div>
+                    <div class="icon-box icon-green">
+                        <i class="fa-solid fa-boxes-stacked"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Stock Inventory</h5>
+                    <span class="stat-badge bg-success-subtle text-success mb-2 d-inline-block">Manage Stock</span>
+                    <p class="text-muted small">Add new medicines, check low stock alerts, and update expiry dates.</p>
+                </div>
+                <div class="mt-3">
+                    <a href="stock.html" class="btn btn-dash">
+                        Manage Stock <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card dash-card p-4 h-100 d-flex flex-column justify-content-between">
+                <div>
+                    <div class="icon-box icon-purple">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Sales & Reports</h5>
+                    <span class="stat-badge mb-2 d-inline-block" style="background: #f3e8ff; color: #8936d5;">Analytics</span>
+                    <p class="text-muted small">Track daily revenue, view transaction history, and export financial data.</p>
+                </div>
+                <div class="mt-3">
+                    <a href="reports.html" class="btn btn-dash">
+                        View Reports <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card dash-card p-4 h-100 d-flex flex-column justify-content-between">
+                <div>
+                    <div class="icon-box icon-orange">
+                        <i class="fa-solid fa-server"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">System Active</h5>
+                    <span class="stat-badge bg-warning-subtle text-warning-emphasis mb-2 d-inline-block">Connected</span>
+                    <p class="text-muted small">Spring Boot / LocalStorage active with local database sync status.</p>
+                </div>
+                <div class="mt-3">
+                    <button class="btn btn-dash" style="cursor: default;">
+                        <i class="fa-solid fa-circle-check text-success me-1"></i> System OK
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap Script -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>

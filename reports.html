@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales & Revenue Reports - Amar Medical Store</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Firebase SDKs Integration -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCgStr8sNdYP5Av8_ceD6x_IEvwhkUwqFQ",
+            authDomain: "amar-medical-store-1f91c.firebaseapp.com",
+            projectId: "amar-medical-store-1f91c",
+            storageBucket: "amar-medical-store-1f91c.appspot.com",
+            messagingSenderId: "918657439323",
+            appId: "1:918657439323:web:e4124132fa54af38af117e"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Global variables taaki baaki functions me use ho sakein
+        window.db = db;
+        window.collection = collection;
+        window.getDocs = getDocs;
+        window.deleteDoc = deleteDoc;
+        window.doc = doc;
+
+        console.log("Firebase Connected Successfully!");
+        
+        // Page load hote hi Firebase se data fetch karne ke liye function call
+        if (typeof window.loadSalesDataFromFirebase === 'function') {
+            window.loadSalesDataFromFirebase();
+        }
+    </script>
+
+    <style>
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: #f1f5f9; 
+            color: #1e293b; 
+            min-height: 100vh;
+        }
+
+        .custom-navbar { 
+            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%); 
+            box-shadow: 0 4px 15px rgba(13, 110, 253, 0.25);
+        }
+
+        .report-card { 
+            border: 1px solid rgba(226, 232, 240, 0.8); 
+            border-radius: 16px; 
+            background: #ffffff; 
+            box-shadow: 0 8px 25px rgba(15, 23, 42, 0.05); 
+            transition: all 0.3s ease;
+        }
+
+        .clickable-row {
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .clickable-row:hover {
+            background-color: #f0f7ff !important;
+        }
+
+        .btn-view-details {
+            background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.35rem 0.85rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .nav-link {
+            transition: all 0.2s ease;
+            border-radius: 8px;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .filter-btn {
+            border-radius: 8px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navigation Bar with Mobile Toggler -->
+<nav class="navbar navbar-expand-lg navbar-dark custom-navbar py-2 px-3 sticky-top">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold" href="index.html">
+            <i class="fa-solid fa-prescription-bottle-medical me-2"></i> Amar Medical Store
+        </a>
+        <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <div class="navbar-nav ms-auto mt-2 mt-lg-0">
+                <a class="nav-link text-white me-2 px-3 py-2" href="index.html"><i class="fa-solid fa-house me-1"></i> Dashboard</a>
+                <a class="nav-link text-white me-2 px-3 py-2" href="billing.html"><i class="fa-solid fa-file-invoice-dollar me-1"></i> Quick Billing</a>
+                <a class="nav-link text-white me-2 px-3 py-2" href="stock.html"><i class="fa-solid fa-boxes-stacked me-1"></i> Stock Inventory</a>
+                <a class="nav-link active fw-bold me-2 px-3 py-2" href="reports.html"><i class="fa-solid fa-chart-line me-1"></i> Sales Reports</a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Main Container -->
+<div class="container py-4">
+    <!-- Header & Date Filter Section -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <h3 class="fw-bold mb-1"><i class="fa-solid fa-chart-pie text-primary me-2"></i>Sales & Revenue Reports</h3>
+            <p class="text-muted small mb-0">Select date to view day-by-day sales and sold products report from Cloud Database.</p>
+        </div>
+
+        <!-- Date Filter Box -->
+        <div class="card report-card p-2 w-100 w-md-auto">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <i class="fa-solid fa-calendar-days text-primary ms-2"></i>
+                <input type="date" id="reportDate" class="form-control form-control-sm" style="width: 160px;" onchange="filterReportByDate()">
+                <button class="btn btn-sm btn-outline-primary filter-btn" onclick="setQuickDate('today')">Today</button>
+                <button class="btn btn-sm btn-outline-secondary filter-btn" onclick="setQuickDate('yesterday')">Yesterday</button>
+                <button class="btn btn-sm btn-primary filter-btn" onclick="setQuickDate('all')">All Time</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="card report-card p-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-muted small fw-semibold">Selected Day Total Revenue</span>
+                        <h3 class="fw-bold text-primary mb-0 mt-1" id="totalSalesAmount">₹0.00</h3>
+                    </div>
+                    <div class="bg-primary-subtle text-primary rounded-circle p-3">
+                        <i class="fa-solid fa-indian-rupee-sign fa-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card report-card p-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-muted small fw-semibold">Total Orders Generated</span>
+                        <h3 class="fw-bold text-success mb-0 mt-1" id="totalOrdersCount">0 Orders</h3>
+                    </div>
+                    <div class="bg-success-subtle text-success rounded-circle p-3">
+                        <i class="fa-solid fa-file-invoice fa-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Day Wise Product Sales Breakdown -->
+        <div class="col-lg-5">
+            <div class="card report-card p-4 h-100">
+                <h5 class="fw-bold text-primary mb-3">
+                    <i class="fa-solid fa-boxes-packing me-2"></i>Products Sold Summary
+                </h5>
+                <p class="text-muted small">Konsa product kitna qty sell hua hai:</p>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Product Name</th>
+                                <th class="text-center">Qty Sold</th>
+                                <th class="text-end">Total (₹)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productSummaryBody">
+                            <!-- Dynamic Product Sales Summary -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sales Transactions List with Clear History Button -->
+        <div class="col-lg-7">
+            <div class="card report-card p-4 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                    <h5 class="fw-bold text-primary mb-0">
+                        <i class="fa-solid fa-clock-rotate-left me-2"></i>Transactions History (Cloud)
+                    </h5>
+                    <button class="btn btn-sm btn-outline-danger fw-bold" onclick="clearAllTransactions()">
+                        <i class="fa-solid fa-trash-can me-1"></i> Clear Cloud History
+                    </button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Invoice</th>
+                                <th>Customer</th>
+                                <th>Date/Time</th>
+                                <th>Amount</th>
+                                <th class="text-center">Details</th>
+                            </tr>
+                        </thead>
+                        <tbody id="salesReportTable">
+                            <!-- Dynamic Sales Rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Bill & Product Details Popup -->
+<div class="modal fade" id="transactionDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-circle-info me-2"></i>Invoice Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="bg-light p-3 rounded-3 mb-3 border">
+                    <div class="row g-2 small">
+                        <div class="col-6"><strong>Invoice ID:</strong> <span id="mInvoiceId" class="text-primary fw-bold">--</span></div>
+                        <div class="col-6"><strong>Date:</strong> <span id="mDate">--</span></div>
+                        <div class="col-6"><strong>Customer:</strong> <span id="mCustomer">--</span></div>
+                        <div class="col-6"><strong>Phone:</strong> <span id="mPhone">--</span></div>
+                        <div class="col-12"><strong>Payment Method:</strong> <span id="mPayMode" class="badge bg-secondary">--</span></div>
+                    </div>
+                </div>
+
+                <h6 class="fw-bold text-primary mb-2"><i class="fa-solid fa-basket-shopping me-2"></i>Items In Bill</h6>
+                
+                <div class="table-responsive border rounded-3 mb-3">
+                    <table class="table table-sm table-striped align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Product</th>
+                                <th class="text-center">Qty</th>
+                                <th class="text-end">Rate</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="mProductListBody">
+                            <!-- Dynamic items -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                    <span class="fw-bold">Grand Total Amount:</span>
+                    <h4 class="fw-bold text-success mb-0" id="mGrandTotal">₹0.00</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap Script -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    let salesHistory = [];
+    let currentFilteredData = [];
+
+    // Firebase se data fetch karne ka main function
+    window.loadSalesDataFromFirebase = async function() {
+        try {
+            const querySnapshot = await window.getDocs(window.collection(window.db, "sales"));
+            salesHistory = [];
+            querySnapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                // Firestore document ID ko bhi store kar lete hain taaki delete karne me kaam aaye
+                salesHistory.push({
+                    firebaseId: docSnap.id,
+                    invoiceId: data.invoiceNo || "#INV-0000",
+                    customer: data.customerName || "Walk-in Customer",
+                    phone: data.customerPhone || "N/A",
+                    dateISO: data.date ? data.date.split(',')[0].trim() : "", // Date extraction format
+                    dateDisplay: data.date || "N/A",
+                    paymentMode: data.paymentMode || "Cash",
+                    grandTotal: parseFloat(String(data.grandTotal).replace('₹', '')) || 0,
+                    items: data.items || []
+                });
+            });
+
+            // Agar date input pehle se set hai toh filter apply karo, warna default today ya sab dikhao
+            filterReportByDate();
+        } catch (error) {
+            console.error("Error fetching sales from Firebase: ", error);
+        }
+    };
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const todayStr = new Date().toISOString().split('T')[0];
+        document.getElementById('reportDate').value = todayStr;
+    });
+
+    function setQuickDate(type) {
+        const dateInput = document.getElementById('reportDate');
+        if (type === 'today') {
+            dateInput.value = new Date().toISOString().split('T')[0];
+        } else if (type === 'yesterday') {
+            const yesterday = new Date(Date.now() - 86400000);
+            dateInput.value = yesterday.toISOString().split('T')[0];
+        } else if (type === 'all') {
+            dateInput.value = "";
+        }
+        filterReportByDate();
+    }
+
+    function filterReportByDate() {
+        const selectedDate = document.getElementById('reportDate').value;
+
+        if (selectedDate === "") {
+            currentFilteredData = salesHistory;
+        } else {
+            // Yahan hum date matching karte hain format ke hisaab se
+            currentFilteredData = salesHistory.filter(sale => {
+                if (!sale.dateDisplay) return false;
+                // Simple check ki date string me selected date match karti ho ya nahi
+                return sale.dateDisplay.includes(selectedDate) || sale.dateISO === selectedDate;
+            });
+        }
+
+        renderSalesReport(currentFilteredData);
+        renderProductSummary(currentFilteredData);
+    }
+
+    function renderSalesReport(data) {
+        const tbody = document.getElementById('salesReportTable');
+        tbody.innerHTML = "";
+        let grandTotalSum = 0;
+
+        if (data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">Is date me koi sale nahi hui hai ya Firebase se data load ho raha hai.</td></tr>`;
+        } else {
+            data.forEach((sale, index) => {
+                grandTotalSum += parseFloat(sale.grandTotal);
+                const row = `
+                    <tr class="clickable-row" onclick="viewTransactionDetails(${index})">
+                        <td class="fw-bold text-primary">${sale.invoiceId}</td>
+                        <td class="fw-semibold">${sale.customer}</td>
+                        <td class="text-muted small">${sale.dateDisplay}</td>
+                        <td class="fw-bold">₹ ${parseFloat(sale.grandTotal).toFixed(2)}</td>
+                        <td class="text-center">
+                            <button class="btn-view-details" onclick="event.stopPropagation(); viewTransactionDetails(${index})">
+                                <i class="fa-solid fa-eye me-1"></i> View
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tbody.insertAdjacentHTML('beforeend', row);
+            });
+        }
+
+        document.getElementById('totalSalesAmount').innerText = `₹${grandTotalSum.toFixed(2)}`;
+        document.getElementById('totalOrdersCount').innerText = `${data.length} Orders`;
+    }
+
+    function renderProductSummary(data) {
+        const productMap = {};
+
+        data.forEach(sale => {
+            if (sale.items && Array.isArray(sale.items)) {
+                sale.items.forEach(item => {
+                    const itemName = item.name || "Unknown Product";
+                    const itemQty = parseInt(item.qty) || 1;
+                    const itemPrice = parseFloat(item.price) || 0;
+
+                    if (!productMap[itemName]) {
+                        productMap[itemName] = { qty: 0, total: 0 };
+                    }
+                    productMap[itemName].qty += itemQty;
+                    productMap[itemName].total += (itemPrice * itemQty);
+                });
+            }
+        });
+
+        const summaryBody = document.getElementById('productSummaryBody');
+        summaryBody.innerHTML = "";
+
+        const keys = Object.keys(productMap);
+        if (keys.length === 0) {
+            summaryBody.innerHTML = `<tr><td colspan="3" class="text-center text-muted py-3">Koi product sell nahi hua hai.</td></tr>`;
+        } else {
+            keys.forEach(prodName => {
+                const row = `
+                    <tr>
+                        <td class="fw-semibold">${prodName}</td>
+                        <td class="text-center"><span class="badge bg-primary-subtle text-primary fw-bold px-2 py-1">${productMap[prodName].qty}</span></td>
+                        <td class="text-end fw-bold">₹${productMap[prodName].total.toFixed(2)}</td>
+                    </tr>
+                `;
+                summaryBody.insertAdjacentHTML('beforeend', row);
+            });
+        }
+    }
+
+    function viewTransactionDetails(index) {
+        const sale = currentFilteredData[index];
+
+        document.getElementById('mInvoiceId').innerText = sale.invoiceId;
+        document.getElementById('mDate').innerText = sale.dateDisplay;
+        document.getElementById('mCustomer').innerText = sale.customer;
+        document.getElementById('mPhone').innerText = sale.phone || 'N/A';
+        document.getElementById('mPayMode').innerText = sale.paymentMode;
+        document.getElementById('mGrandTotal').innerText = `₹${parseFloat(sale.grandTotal).toFixed(2)}`;
+
+        const productBody = document.getElementById('mProductListBody');
+        productBody.innerHTML = "";
+
+        if (sale.items && Array.isArray(sale.items)) {
+            sale.items.forEach((item, i) => {
+                const itemPrice = parseFloat(item.price) || 0;
+                const itemQty = parseInt(item.qty) || 1;
+                const itemTotal = (itemPrice * itemQty).toFixed(2);
+                productBody.innerHTML += `
+				<tr>
+				                        <td>${i + 1}</td>
+				                        <td class="fw-semibold">${item.name || 'Product'}</td>
+				                        <td class="text-center">${itemQty}</td>
+				                        <td class="text-end">₹${itemPrice.toFixed(2)}</td>
+				                        <td class="text-end fw-bold">₹${itemTotal}</td>
+				                    </tr>
+				                `;
+				            });
+				        }
+
+				        const detailsModal = new bootstrap.Modal(document.getElementById('transactionDetailsModal'));
+				        detailsModal.show();
+				    }
+
+				    // Function to Clear/Delete All Transaction History from Firebase Cloud
+				    async function clearAllTransactions() {
+				        if (confirm("Kya aap Firebase cloud se saari transaction history delete karna chahte hain? Yeh data permanently delete ho jayega!")) {
+				            try {
+				                const querySnapshot = await window.getDocs(window.collection(window.db, "sales"));
+				                let deletePromises = [];
+				                querySnapshot.forEach((docSnap) => {
+				                    deletePromises.push(window.deleteDoc(window.doc(window.db, "sales", docSnap.id)));
+				                });
+				                await Promise.all(deletePromises);
+				                alert("Saari history successfully delete ho gayi hai!");
+				                window.loadSalesDataFromFirebase();
+				            } catch (error) {
+				                console.error("Error clearing transactions: ", error);
+				                alert("History delete karne me kuch error aayi hai.");
+				            }
+				        }
+				    }
+				</script>
+				</body>
+				</html>

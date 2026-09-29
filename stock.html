@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Inventory - Amar Medical Store</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Firebase SDKs Integration -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCgStr8sNdYP5Av8_ceD6x_IEvwhkUwqFQ",
+            authDomain: "amar-medical-store-1f91c.firebaseapp.com",
+            projectId: "amar-medical-store-1f91c",
+            storageBucket: "amar-medical-store-1f91c.appspot.com",
+            messagingSenderId: "918657439323",
+            appId: "1:918657439323:web:e4124132fa54af38af117e"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Global variables for Firebase functions
+        window.db = db;
+        window.collection = collection;
+        window.getDocs = getDocs;
+        window.addDoc = addDoc;
+        window.updateDoc = updateDoc;
+        window.deleteDoc = deleteDoc;
+        window.doc = doc;
+
+        console.log("Firebase Connected Successfully!");
+
+        // Load stock data on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            if (typeof window.loadStockFromFirebase === 'function') {
+                window.loadStockFromFirebase();
+            }
+        });
+    </script>
+
+    <style>
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: #f1f5f9; 
+            color: #1e293b; 
+            min-height: 100vh;
+        }
+
+        .custom-navbar { 
+            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%); 
+            box-shadow: 0 4px 15px rgba(13, 110, 253, 0.25);
+        }
+
+        .stock-card { 
+            border: 1px solid rgba(226, 232, 240, 0.8); 
+            border-radius: 16px; 
+            background: #ffffff; 
+            box-shadow: 0 8px 25px rgba(15, 23, 42, 0.05); 
+        }
+
+        .form-control, .form-select { 
+            border-radius: 10px; 
+            border: 1.5px solid #cbd5e1; 
+            padding: 0.65rem 1rem; 
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.15);
+        }
+
+        .btn-add-stock { 
+            background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%); 
+            color: #fff; 
+            border: none; 
+            border-radius: 10px; 
+            font-weight: 600; 
+            padding: 0.65rem 1.25rem; 
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(13, 110, 253, 0.25);
+        }
+
+        .btn-add-stock:hover { 
+            background: linear-gradient(135deg, #0b5ed7 0%, #0a58ca 100%); 
+            transform: translateY(-2px);
+            color: #fff;
+        }
+
+        .filter-tab {
+            border-radius: 20px;
+            font-weight: 600;
+            padding: 0.45rem 1.1rem;
+            cursor: pointer;
+            border: 1.5px solid transparent;
+            transition: all 0.25s ease;
+        }
+
+        .filter-tab:hover {
+            transform: translateY(-2px);
+        }
+
+        .nav-link {
+            transition: all 0.2s ease;
+            border-radius: 8px;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .action-btn {
+            transition: all 0.2s ease;
+        }
+
+        .action-btn:hover {
+            transform: scale(1.15);
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navigation Bar -->
+<nav class="navbar navbar-expand-lg navbar-dark custom-navbar py-2 px-3 sticky-top">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold" href="#">
+            <i class="fa-solid fa-prescription-bottle-medical me-2"></i> Amar Medical Store
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link text-white me-2 px-3 py-2" href="index.html"><i class="fa-solid fa-house me-1"></i> Dashboard</a>
+                <a class="nav-link text-white me-2 px-3 py-2" href="billing.html"><i class="fa-solid fa-file-invoice-dollar me-1"></i> Quick Billing</a>
+                <a class="nav-link active fw-bold me-2 px-3 py-2" href="stock.html"><i class="fa-solid fa-boxes-stacked me-1"></i> Stock Inventory</a>
+                <a class="nav-link text-white me-2 px-3 py-2" href="reports.html"><i class="fa-solid fa-chart-line me-1"></i> Sales Reports</a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Main Container -->
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <h3 class="fw-bold mb-1"><i class="fa-solid fa-boxes-stacked text-primary me-2"></i>Stock Inventory (Cloud)</h3>
+            <p class="text-muted small mb-0">Manage medicine list, MRP, Rate and MM/YY expiry dates from Firebase.</p>
+        </div>
+        <button class="btn btn-add-stock" onclick="openAddModal()">
+            <i class="fa-solid fa-plus me-1"></i> Add New Medicine
+        </button>
+    </div>
+
+    <!-- Filter Tabs & Stock Table Card -->
+    <div class="card stock-card p-4">
+        <div class="d-flex align-items-center flex-wrap gap-2 mb-4">
+            <span class="filter-tab bg-primary text-white" onclick="filterStock('all')" id="tabAll">
+                <i class="fa-solid fa-list me-1"></i> All Medicines <span class="badge bg-white text-primary rounded-pill ms-1" id="countAll">0</span>
+            </span>
+            <span class="filter-tab bg-warning-subtle text-warning-emphasis border-warning" onclick="filterStock('expiring')" id="tabExpiring">
+                <i class="fa-solid fa-triangle-exclamation me-1"></i> Expiring Soon <span class="badge bg-warning text-dark rounded-pill ms-1" id="countExpiring">0</span>
+            </span>
+            <span class="filter-tab bg-danger-subtle text-danger border-danger" onclick="filterStock('expired')" id="tabExpired">
+                <i class="fa-solid fa-circle-xmark me-1"></i> Expired <span class="badge bg-danger text-white rounded-pill ms-1" id="countExpired">0</span>
+            </span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 text-center">
+                <thead class="table-light">
+                    <tr>
+                        <th>#ID</th>
+                        <th class="text-start">Medicine Name</th>
+                        <th>Pack</th>
+                        <th>MRP (₹)</th>
+                        <th>Rate (₹)</th>
+                        <th>Stock QTY</th>
+                        <th>EXP (MM/YY)</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="stockTableBody">
+                    <!-- Dynamic Rows Insertion -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Add / Edit Medicine -->
+<div class="modal fade" id="addStockModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-primary" id="modalTitle"><i class="fa-solid fa-prescription-bottle me-2"></i>Add New Medicine</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="addStockForm" onsubmit="saveMedicine(event)">
+                    <input type="hidden" id="editDocId" value="">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Medicine Name</label>
+                        <input type="text" id="mName" class="form-control" placeholder="e.g. PAN-D TABLET" required>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-6">
+                            <label class="form-label fw-semibold">Pack</label>
+                            <input type="text" id="mPack" class="form-control" placeholder="10*10" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-semibold">Stock Quantity</label>
+                            <input type="number" id="mQty" class="form-control" placeholder="50" required>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-6">
+                            <label class="form-label fw-semibold">MRP (₹)</label>
+                            <input type="number" step="0.01" id="mMrp" class="form-control" placeholder="0.00" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-semibold">Rate (₹)</label>
+                            <input type="number" step="0.01" id="mRate" class="form-control" placeholder="0.00" required>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Expiry Date (MM/YY)</label>
+                        <input type="text" id="mExpiry" class="form-control" placeholder="MM/YY" maxlength="5" oninput="formatExpiryInput(this)" required>
+                    </div>
+                    <button type="submit" class="btn btn-add-stock w-100 py-2" id="saveBtnText">Save Medicine to Stock</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap Script -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    let stockData = [];
+
+    // Fetch stock data from Firebase Cloud Firestore
+    window.loadStockFromFirebase = async function() {
+        try {
+            const querySnapshot = await window.getDocs(window.collection(window.db, "medicines"));
+            stockData = [];
+            querySnapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                stockData.push({
+                    docId: docSnap.id,
+                    name: data.name || "",
+                    pack: data.pack || "",
+                    mrp: parseFloat(data.mrp) || 0,
+                    rate: parseFloat(data.rate) || 0,
+                    stock: parseInt(data.stock) || 0,
+                    expiry: data.expiry || ""
+                });
+            });
+            renderStockTable(stockData);
+        } catch (error) {
+            console.error("Error loading stock from Firebase: ", error);
+        }
+    };
+
+    // Auto format MM/YY as user types
+    function formatExpiryInput(input) {
+        let value = input.value.replace(/\D/g, ''); // Remove non-digits
+        if (value.length > 2) {
+            value = value.substring(0, 2) + '/' + value.substring(2, 4);
+        }
+        input.value = value;
+    }
+
+    function checkExpiryStatus(expStr) {
+        if (!expStr || !expStr.includes('/')) return { status: 'normal', text: expStr };
+        
+        let parts = expStr.split('/');
+        let expMonth = parseInt(parts[0]) || 1;
+        let expYear = 2000 + (parseInt(parts[1]) || 0);
+
+        let now = new Date();
+        let currentMonth = now.getMonth() + 1;
+        let currentYear = now.getFullYear();
+
+        let expTotalMonths = (expYear * 12) + expMonth;
+        let currentTotalMonths = (currentYear * 12) + currentMonth;
+
+        if (expTotalMonths < currentTotalMonths) {
+            return { status: 'expired', text: `${expStr} (Expired)` };
+        } else if (expTotalMonths <= currentTotalMonths + 1) {
+            return { status: 'expiring', text: `${expStr} (Expiring Soon)` };
+        }
+        return { status: 'normal', text: expStr };
+    }
+
+    function renderStockTable(data) {
+        const tbody = document.getElementById('stockTableBody');
+        tbody.innerHTML = "";
+
+        let countAll = stockData.length;
+        let countExpiring = 0;
+        let countExpired = 0;
+
+        if (data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted py-4">Koi medicine stock me nahi hai ya cloud se data load ho raha hai.</td></tr>`;
+        } else {
+            data.forEach((med, index) => {
+                let expCheck = checkExpiryStatus(med.expiry);
+                let statusBadge = "";
+
+                if (expCheck.status === 'expired') {
+                    statusBadge = `<span class="badge bg-danger">${expCheck.text}</span>`;
+                    countExpired++;
+                } else if (expCheck.status === 'expiring') {
+                    statusBadge = `<span class="badge bg-warning text-dark">${expCheck.text}</span>`;
+                    countExpiring++;
+                } else {
+                    statusBadge = `<span class="badge bg-light text-dark border">${expCheck.text}</span>`;
+                }
+
+                const row = `
+                    <tr>
+                        <td class="fw-bold text-muted">${index + 1}</td>
+                        <td class="text-start fw-semibold text-primary">${med.name}</td>
+                        <td>${med.pack || '-'}</td>
+                        <td class="fw-bold">₹${parseFloat(med.mrp).toFixed(2)}</td>
+                        <td class="fw-bold text-success">₹${parseFloat(med.rate).toFixed(2)}</td>
+                        <td>${med.stock}</td>
+                        <td>${statusBadge}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary border-0 action-btn me-1" onclick="editMedicine('${med.docId}')" title="Edit">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger border-0 action-btn" onclick="deleteMedicine('${med.docId}')" title="Delete">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tbody.insertAdjacentHTML('beforeend', row);
+            });
+        }
+
+        document.getElementById('countAll').innerText = countAll;
+        document.getElementById('countExpiring').innerText = countExpiring;
+        document.getElementById('countExpired').innerText = countExpired;
+    }
+
+    function openAddModal() {
+        document.getElementById('addStockForm').reset();
+        document.getElementById('editDocId').value = "";
+        document.getElementById('modalTitle').innerHTML = `<i class="fa-solid fa-prescription-bottle me-2"></i>Add New Medicine`;
+        document.getElementById('saveBtnText').innerText = "Save Medicine to Stock";
+        let modalEl = document.getElementById('addStockModal');
+        let modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+        modal.show();
+    }
+
+    function editMedicine(docId) {
+        const med = stockData.find(item => item.docId === docId);
+        if (!med) return;
+
+        document.getElementById('editDocId').value = med.docId;
+        document.getElementById('mName').value = med.name;
+        document.getElementById('mPack').value = med.pack;
+        document.getElementById('mQty').value = med.stock;
+        document.getElementById('mMrp').value = med.mrp;
+        document.getElementById('mRate').value = med.rate;
+        document.getElementById('mExpiry').value = med.expiry;
+
+        document.getElementById('modalTitle').innerHTML = `<i class="fa-solid fa-pen-to-square me-2"></i>Edit Medicine`;
+        document.getElementById('saveBtnText').innerText = "Update Medicine";
+        let modalEl = document.getElementById('addStockModal');
+        let modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+        modal.show();
+    }
+
+    async function saveMedicine(event) {
+        event.preventDefault();
+        const editDocId = document.getElementById('editDocId').value;
+        
+        const name = document.getElementById('mName').value.trim().toUpperCase();
+        const pack = document.getElementById('mPack').value.trim();
+        const mrp = parseFloat(document.getElementById('mMrp').value);
+        const rate = parseFloat(document.getElementById('mRate').value);
+        const stock = parseInt(document.getElementById('mQty').value);
+        const expiry = document.getElementById('mExpiry').value.trim();
+
+        try {
+            if (editDocId) {
+                // Update existing record in Firebase
+                const medRef = window.doc(window.db, "medicines", editDocId);
+                await window.updateDoc(medRef, { name, pack, mrp, rate, stock, expiry });
+                alert("Medicine successfully update ho gayi hai!");
+            } else {
+                // Add new record to Firebase
+                await window.addDoc(window.collection(window.db, "medicines"), {
+                    name, pack, mrp, rate, stock, expiry, createdAt: new Date().toISOString()
+                });
+                alert("New medicine successfully save ho gayi hai!");
+            }
+
+            let modalEl = document.getElementById('addStockModal');
+            let modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+            modalInstance.hide();
+            
+            window.loadStockFromFirebase(); // Reload fresh data
+        } catch (error) {
+            console.error("Error saving medicine: ", error);
+            alert("Error: " + error.message);
+        }
+    }
+
+    async function deleteMedicine(docId) {
+        if (confirm("Kya aap is medicine ko cloud stock se hatana chahte hain?")) {
+            try {
+                await window.deleteDoc(window.doc(window.db, "medicines", docId));
+                alert("Medicine successfully delete ho gayi hai!");
+                window.loadStockFromFirebase();
+            } catch (error) {
+                console.error("Error deleting medicine: ", error);
+                alert("Delete karne me kuch error aayi hai.");
+            }
+        }
+    }
+
+    function filterStock(type) {
+        if (type === 'expiring') {
+            const filtered = stockData.filter(med => checkExpiryStatus(med.expiry).status === 'expiring');
+            renderStockTable(filtered);
+        } else if (type === 'expired') {
+            const filtered = stockData.filter(med => checkExpiryStatus(med.expiry).status === 'expired');
+            renderStockTable(filtered);
+        } else {
+            renderStockTable(stockData);
+        }
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Amar Medical Store</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f4f7fe;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(13, 110, 253, 0.12) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.12) 0px, transparent 50%),
+                url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 100 100" opacity="0.04"><path fill="%230f172a" d="M30,20 h10 v10 h-10 z M35,15 v20 M15,60 a8,8 0 0,1 16,0 v15 a8,8 0 0,1 -16,0 z M70,30 a10,10 0 1,0 0,20 a10,10 0 1,0 0,-20 M75,70 l10,-10 l5,5 l-10,10 z"/></svg>');
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+        }
+
+        .login-card {
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 24px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+            width: 100%;
+            max-width: 440px;
+            padding: 2.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .login-card:hover {
+            box-shadow: 0 25px 50px rgba(13, 110, 253, 0.12);
+        }
+
+        .logo-box {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+            color: white;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin: 0 auto 1.5rem auto;
+            box-shadow: 0 8px 20px rgba(13, 110, 253, 0.3);
+        }
+
+        .form-control {
+            border-radius: 12px;
+            padding: 0.75rem 1rem 0.75rem 2.75rem;
+            border: 1px solid #cbd5e1;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .form-control:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.15);
+        }
+
+        .input-group-icon {
+            position: relative;
+        }
+
+        .input-group-icon i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64748b;
+            z-index: 10;
+        }
+
+        .btn-login {
+            border-radius: 12px;
+            font-weight: 600;
+            padding: 0.75rem;
+            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+            border: none;
+            color: white;
+            width: 100%;
+            box-shadow: 0 4px 15px rgba(13, 110, 253, 0.3);
+            transition: all 0.25s ease;
+        }
+
+        .btn-login:hover {
+            background: linear-gradient(135deg, #0b5ed7 0%, #084298 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(13, 110, 253, 0.4);
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-card">
+    <div class="logo-box">
+        <i class="fa-solid fa-prescription-bottle-medical"></i>
+    </div>
+    <div class="text-center mb-4">
+        <h4 class="fw-bold mb-1">Amar Medical Store</h4>
+        <p class="text-muted small mb-1"><span class="badge bg-primary-subtle text-primary border px-2 py-1">Dawa India Partner</span></p>
+        <p class="text-secondary small">Account Login</p>
+    </div>
+
+    <!-- Error Alert Box -->
+    <div id="errorAlert" class="alert alert-danger py-2 small d-none text-center mb-3" role="alert">
+        <i class="fa-solid fa-triangle-exclamation me-1"></i> Invalid Username or Password!
+    </div>
+
+    <!-- Success Alert Box -->
+    <div id="successAlert" class="alert alert-success py-2 small d-none text-center mb-3" role="alert">
+        <i class="fa-solid fa-circle-check me-1"></i> Password successfully reset!
+    </div>
+
+    <form id="loginForm" onsubmit="handleLogin(event)">
+        <div class="mb-3">
+            <label class="form-label small fw-bold text-muted">Username</label>
+            <div class="input-group-icon">
+                <i class="fa-solid fa-user"></i>
+                <input type="text" id="username" class="form-control" value="Amar" required>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label small fw-bold text-muted">Password</label>
+            <div class="input-group-icon">
+                <i class="fa-solid fa-lock"></i>
+                <input type="password" id="password" class="form-control" value="Amar@3099" required>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="rememberMe">
+                <label class="form-check-label small text-muted" for="rememberMe">Remember me</label>
+            </div>
+            <a href="#" class="small text-decoration-none fw-bold text-primary" data-bs-toggle="modal" data-bs-target="#forgotModal">Forgot Password?</a>
+        </div>
+
+        <button type="submit" class="btn btn-login">
+            <i class="fa-solid fa-right-to-bracket me-2"></i> Login
+        </button>
+    </form>
+
+    <div class="text-center mt-4 pt-3 border-top">
+        <p class="text-muted" style="font-size: 0.75rem;">Managed by Amar Medical Store | Thekama, Azamgarh</p>
+    </div>
+</div>
+
+<!-- Forgot Password Modal (Reset Password Form) -->
+<div class="modal fade" id="forgotModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow-lg p-3">
+            <div class="modal-header border-0">
+                <h5 class="fw-bold"><i class="fa-solid fa-key text-primary me-2"></i>Reset Password</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small">Apna registered username aur naya password enter karein:</p>
+                <form onsubmit="handleResetPassword(event)">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Username</label>
+                        <input type="text" id="resetUser" class="form-control" style="padding-left: 1rem;" placeholder="Enter username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">New Password</label>
+                        <input type="password" id="resetPass" class="form-control" style="padding-left: 1rem;" placeholder="Enter new password" required>
+                    </div>
+                    <div id="resetError" class="text-danger small mb-2 d-none">Username match nahi hua! Default username: <strong>Amar</strong></div>
+                    <button type="submit" class="btn btn-primary w-100 rounded-3 py-2 fw-semibold">Update Password</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap Script -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    // Get stored password from localStorage or use default
+    if (!localStorage.getItem("storedPassword")) {
+        localStorage.setItem("storedPassword", "Amar@3099");
+    }
+    if (!localStorage.getItem("storedUsername")) {
+        localStorage.setItem("storedUsername", "Amar");
+    }
+
+    function handleLogin(event) {
+        event.preventDefault(); 
+        
+        const userField = document.getElementById("username").value.trim();
+        const passField = document.getElementById("password").value.trim();
+        const errorAlert = document.getElementById("errorAlert");
+
+        const correctUser = localStorage.getItem("storedUsername");
+        const correctPass = localStorage.getItem("storedPassword");
+
+        if (userField === correctUser && passField === correctPass) {
+            localStorage.setItem("isLoggedIn", "true");
+            localStorage.setItem("loggedInUser", userField);
+            window.location.href = "index.html";
+        } else {
+            errorAlert.classList.remove("d-none");
+        }
+    }
+
+    function handleResetPassword(event) {
+        event.preventDefault();
+        const rUser = document.getElementById("resetUser").value.trim();
+        const rPass = document.getElementById("resetPass").value.trim();
+        const resetError = document.getElementById("resetError");
+
+        if (rUser === localStorage.getItem("storedUsername")) {
+            localStorage.setItem("storedPassword", rPass);
+            
+            // Close modal
+            const modalEl = document.getElementById('forgotModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            modal.hide();
+
+            // Show success message
+            const successAlert = document.getElementById("successAlert");
+            successAlert.classList.remove("d-none");
+
+            // Auto fill new password in login box
+            document.getElementById("password").value = rPass;
+        } else {
+            resetError.classList.remove("d-none");
+        }
+    }
+</script>
+</body>
+</html>
