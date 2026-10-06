@@ -1,0 +1,41 @@
+package com.chandan.medical_store;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import java.util.List;
+import java.util.Optional;
+
+@RestController
+@RequestMapping("/api/sales")
+public class SaleController {
+
+    @Autowired
+    private SaleRepository saleRepository;
+
+    // 1. Saari sales list lene ke liye
+    @GetMapping("/all")
+    public List<Sale> getAllSales() {
+        return saleRepository.findAll();
+    }
+
+    // 2. Specific ID ka data lene ke liye (Repeat/Print ke liye)
+    @GetMapping("/{id}")
+    public ResponseEntity<Sale> getSaleById(@PathVariable Long id) {
+        Optional<Sale> sale = saleRepository.findById(id);
+        if (sale.isPresent()) {
+            return ResponseEntity.ok(sale.get());
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    // 3. Single Invoice Delete karne ke liye
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<String> deleteInvoice(@PathVariable Long id) {
+        if (saleRepository.existsById(id)) {
+            saleRepository.deleteById(id);
+            return ResponseEntity.ok("Invoice deleted successfully");
+        }
+        return ResponseEntity.status(404).body("Invoice not found");
+    }
+}
