@@ -367,297 +367,333 @@
                     </div>
                 </div>
             </div>
-			<div class="modal-footer border-0 no-print">
-			                <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-			                <button class="btn btn-primary fw-bold" onclick="window.print()"><i class="fa-solid fa-print me-1"></i> Print Receipt</button>
-			            </div>
-			        </div>
-			    </div>
-			</div>
+            <div class="modal-footer border-0 no-print">
+				<button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+				                <button class="btn btn-primary fw-bold" onclick="window.print()"><i class="fa-solid fa-print me-1"></i> Print Receipt</button>
+				            </div>
+				        </div>
+				    </div>
+				</div>
 
-			<!-- Bootstrap Script & Main Logic -->
-			<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-			<script>
-			    function isNumberKey(evt) {
-			        var charCode = (evt.which) ? evt.which : evt.keyCode;
-			        return !(charCode > 31 && (charCode < 48 || charCode > 57));
-			    }
+				<!-- Bootstrap Script & Main Logic -->
+				<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+				<script>
+				    function isNumberKey(evt) {
+				        var charCode = (evt.which) ? evt.which : evt.keyCode;
+				        return !(charCode > 31 && (charCode < 48 || charCode > 57));
+				    }
 
-			    let currentBillItems = [];
-			    let stockData = [];
+				    let currentBillItems = [];
+				    let stockData = [];
 
-			    // Load Medicines from Firebase Firestore
-			    document.addEventListener("DOMContentLoaded", async function () {
-			        try {
-			            const querySnapshot = await window.getDocs(window.collection(window.db, "medicines"));
-			            stockData = [];
-			            querySnapshot.forEach((doc) => {
-			                const med = doc.data();
-			                stockData.push({
-			                    id: doc.id,
-			                    name: med.name || med.medicineName,
-			                    pack: med.pack,
-			                    mrp: med.mrp,
-			                    rate: med.rate,
-			                    stock: med.stock,
-			                    expiry: med.expiry
-			                });
-			            });
-			            populateMedicineDropdown();
-			        } catch (error) {
-			            console.error("Firebase se medicines laane me error aayi: ", error);
-			            stockData = JSON.parse(localStorage.getItem("medicalStock")) || [];
-			            populateMedicineDropdown();
-			        }
-			    });
+				    // Load Medicines from Firebase Firestore
+				    document.addEventListener("DOMContentLoaded", async function () {
+				        try {
+				            const querySnapshot = await window.getDocs(window.collection(window.db, "medicines"));
+				            stockData = [];
+				            querySnapshot.forEach((doc) => {
+				                const med = doc.data();
+				                stockData.push({
+				                    id: doc.id,
+				                    name: med.name || med.medicineName,
+				                    pack: med.pack,
+				                    mrp: med.mrp,
+				                    rate: med.rate,
+				                    stock: med.stock,
+				                    expiry: med.expiry
+				                });
+				            });
+				            populateMedicineDropdown();
+				        } catch (error) {
+				            console.error("Firebase se medicines laane me error aayi: ", error);
+				            stockData = JSON.parse(localStorage.getItem("medicalStock")) || [];
+				            populateMedicineDropdown();
+				        }
 
-			    function populateMedicineDropdown() {
-			        const medSelect = document.getElementById('medSelect');
-			        medSelect.innerHTML = '<option value="" disabled selected>-- Choose Medicine --</option>';
-			        stockData.forEach(med => {
-			            const option = document.createElement('option');
-			            option.value = med.id;
-			            option.textContent = `${med.name} (Rate: ₹${med.rate})`;
-			            option.setAttribute('data-name', med.name);
-			            option.setAttribute('data-pack', med.pack || '-');
-			            option.setAttribute('data-mrp', med.mrp || 0);
-			            option.setAttribute('data-rate', med.rate || 0);
-			            option.setAttribute('data-exp', med.expiry || '-');
-			            medSelect.appendChild(option);
-			        });
-			    }
+				        // PURANE BILL KO REPEAT / LOAD KARNE KA CODE (Yahan add kar diya gaya hai)
+				        const urlParams = new URLSearchParams(window.location.search);
+				        if (urlParams.get('repeat') === 'true') {
+				            const savedData = localStorage.getItem("repeatBillData");
+				            if (savedData) {
+				                const bill = JSON.parse(savedData);
+				                
+				                // Customer Name aur Phone fill karna
+				                if (document.getElementById('custName')) {
+				                    document.getElementById('custName').value = bill.customer || bill.customerName || "";
+				                }
+				                if (document.getElementById('custPhone')) {
+				                    document.getElementById('custPhone').value = bill.phone || "";
+				                }
 
-			    function onMedicineSelect() {
-			        const medSelect = document.getElementById('medSelect');
-			        const selectedOption = medSelect.options[medSelect.selectedIndex];
-			        if (selectedOption.value) {
-			            document.getElementById('medPack').value = selectedOption.getAttribute('data-pack');
-			            document.getElementById('medMrp').value = parseFloat(selectedOption.getAttribute('data-mrp')).toFixed(2);
-			            document.getElementById('medPrice').value = parseFloat(selectedOption.getAttribute('data-rate')).toFixed(2);
-			            document.getElementById('medExp').value = selectedOption.getAttribute('data-exp');
-			            document.getElementById('medQty').value = 1;
-			        }
-			    }
+				                // Items ko currentBillItems array me dalna
+				                if (bill.items && Array.isArray(bill.items)) {
+				                    currentBillItems = [];
+				                    bill.items.forEach(item => {
+				                        currentBillItems.push({
+				                            id: item.id || Date.now(),
+				                            name: item.name,
+				                            pack: item.pack || '-',
+				                            price: parseFloat(item.price) || 0,
+				                            expiry: item.expiry || '-',
+				                            qty: parseInt(item.qty) || 1
+				                        });
+				                    });
+				                    renderInvoiceTable();
+				                }
 
-			    function addItemToBill() {
-			        const medSelect = document.getElementById('medSelect');
-			        const selectedOption = medSelect.options[medSelect.selectedIndex];
+				                // LocalStorage clean kar dena taaki baar-baar load na ho
+				                localStorage.removeItem("repeatBillData");
+				            }
+				        }
+				    });
 
-			        if (!selectedOption || !selectedOption.value) {
-			            alert("Kripya pehle medicine select karein.");
-			            return;
-			        }
+				    function populateMedicineDropdown() {
+				        const medSelect = document.getElementById('medSelect');
+				        medSelect.innerHTML = '<option value="" disabled selected>-- Choose Medicine --</option>';
+				        stockData.forEach(med => {
+				            const option = document.createElement('option');
+				            option.value = med.id;
+				            option.textContent = `${med.name} (Rate: ₹${med.rate})`;
+				            option.setAttribute('data-name', med.name);
+				            option.setAttribute('data-pack', med.pack || '-');
+				            option.setAttribute('data-mrp', med.mrp || 0);
+				            option.setAttribute('data-rate', med.rate || 0);
+				            option.setAttribute('data-exp', med.expiry || '-');
+				            medSelect.appendChild(option);
+				        });
+				    }
 
-			        const medId = selectedOption.value;
-			        const name = selectedOption.getAttribute('data-name');
-			        const pack = selectedOption.getAttribute('data-pack');
-			        const price = parseFloat(selectedOption.getAttribute('data-rate'));
-			        const expiry = selectedOption.getAttribute('data-exp');
-			        const qty = parseInt(document.getElementById('medQty').value) || 1;
+				    function onMedicineSelect() {
+				        const medSelect = document.getElementById('medSelect');
+				        const selectedOption = medSelect.options[medSelect.selectedIndex];
+				        if (selectedOption.value) {
+				            document.getElementById('medPack').value = selectedOption.getAttribute('data-pack');
+				            document.getElementById('medMrp').value = parseFloat(selectedOption.getAttribute('data-mrp')).toFixed(2);
+				            document.getElementById('medPrice').value = parseFloat(selectedOption.getAttribute('data-rate')).toFixed(2);
+				            document.getElementById('medExp').value = selectedOption.getAttribute('data-exp');
+				            document.getElementById('medQty').value = 1;
+				        }
+				    }
 
-			        const existingItem = currentBillItems.find(item => item.id == medId);
-			        if (existingItem) {
-			            existingItem.qty += qty;
-			        } else {
-			            currentBillItems.push({ id: medId, name: name, pack: pack, price: price, expiry: expiry, qty: qty });
-			        }
+				    function addItemToBill() {
+				        const medSelect = document.getElementById('medSelect');
+				        const selectedOption = medSelect.options[medSelect.selectedIndex];
 
-			        renderInvoiceTable();
-			        medSelect.selectedIndex = 0;
-			        document.getElementById('medPack').value = "";
-			        document.getElementById('medMrp').value = "";
-			        document.getElementById('medPrice').value = "";
-			        document.getElementById('medExp').value = "";
-			        document.getElementById('medQty').value = "1";
-			    }
+				        if (!selectedOption || !selectedOption.value) {
+				            alert("Kripya pehle medicine select karein.");
+				            return;
+				        }
 
-			    function removeItem(index) {
-			        currentBillItems.splice(index, 1);
-			        renderInvoiceTable();
-			    }
+				        const medId = selectedOption.value;
+				        const name = selectedOption.getAttribute('data-name');
+				        const pack = selectedOption.getAttribute('data-pack');
+				        const price = parseFloat(selectedOption.getAttribute('data-rate'));
+				        const expiry = selectedOption.getAttribute('data-exp');
+				        const qty = parseInt(document.getElementById('medQty').value) || 1;
 
-			    function renderInvoiceTable() {
-			        const tbody = document.getElementById('billItemsTable');
-			        const selectedGstPercentage = parseFloat(document.getElementById('gstRateSelect').value) || 0;
-			        tbody.innerHTML = "";
+				        const existingItem = currentBillItems.find(item => item.id == medId);
+				        if (existingItem) {
+				            existingItem.qty += qty;
+				        } else {
+				            currentBillItems.push({ id: medId, name: name, pack: pack, price: price, expiry: expiry, qty: qty });
+				        }
 
-			        if (currentBillItems.length === 0) {
-			            tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-muted">Koi item bill me add nahi hai.</td></tr>`;
-			            document.getElementById('subTotalDisplay').innerText = "₹0.00";
-			            document.getElementById('gstAmountDisplay').innerText = "₹0.00";
-			            document.getElementById('grandTotalDisplay').innerText = "₹0.00";
-			            return;
-			        }
+				        renderInvoiceTable();
+				        medSelect.selectedIndex = 0;
+				        document.getElementById('medPack').value = "";
+				        document.getElementById('medMrp').value = "";
+				        document.getElementById('medPrice').value = "";
+				        document.getElementById('medExp').value = "";
+				        document.getElementById('medQty').value = "1";
+				    }
 
-			        let subTotal = 0;
-			        currentBillItems.forEach((item, index) => {
-			            const itemTotal = item.price * item.qty;
-			            subTotal += itemTotal;
+				    function removeItem(index) {
+				        currentBillItems.splice(index, 1);
+				        renderInvoiceTable();
+				    }
 
-			            const row = `
-			                <tr>
-			                    <td class="text-start ps-4 fw-semibold text-primary">${item.name}</td>
-			                    <td>${item.pack}</td>
-			                    <td>${item.qty}</td>
-			                    <td>₹${item.price.toFixed(2)}</td>
-			                    <td><span class="badge bg-light text-dark border">${item.expiry}</span></td>
-			                    <td class="fw-bold">₹${itemTotal.toFixed(2)}</td>
-			                    <td>
-			                        <button class="btn btn-sm btn-outline-danger border-0" onclick="removeItem(${index})"><i class="fa-solid fa-trash"></i></button>
-			                    </td>
-			                </tr>
-			            `;
-			            tbody.insertAdjacentHTML('beforeend', row);
-			        });
+				    function renderInvoiceTable() {
+				        const tbody = document.getElementById('billItemsTable');
+				        const selectedGstPercentage = parseFloat(document.getElementById('gstRateSelect').value) || 0;
+				        tbody.innerHTML = "";
 
-			        const gstAmount = subTotal * (selectedGstPercentage / 100);
-			        const grandTotal = subTotal + gstAmount;
+				        if (currentBillItems.length === 0) {
+				            tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-muted">Koi item bill me add nahi hai.</td></tr>`;
+				            document.getElementById('subTotalDisplay').innerText = "₹0.00";
+				            document.getElementById('gstAmountDisplay').innerText = "₹0.00";
+				            document.getElementById('grandTotalDisplay').innerText = "₹0.00";
+				            return;
+				        }
 
-			        const gstRowContainer = document.getElementById('gstRowContainer');
-			        const subTotalRowContainer = document.getElementById('subTotalRowContainer');
+				        let subTotal = 0;
+				        currentBillItems.forEach((item, index) => {
+				            const itemTotal = item.price * item.qty;
+				            subTotal += itemTotal;
 
-			        if (selectedGstPercentage > 0) {
-			            gstRowContainer.style.setProperty('display', 'flex', 'important');
-			            subTotalRowContainer.style.setProperty('display', 'flex', 'important');
-			            document.getElementById('gstLabelDisplay').innerText = `GST Amount (${selectedGstPercentage}%):`;
-			            document.getElementById('gstAmountDisplay').innerText = `₹${gstAmount.toFixed(2)}`;
-			            document.getElementById('grandTotalLabelText').innerText = "Grand Total:";
-			        } else {
-			            gstRowContainer.style.setProperty('display', 'none', 'important');
-			            subTotalRowContainer.style.setProperty('display', 'none', 'important');
-			            document.getElementById('grandTotalLabelText').innerText = "Total:";
-			        }
+				            const row = `
+				                <tr>
+				                    <td class="text-start ps-4 fw-semibold text-primary">${item.name}</td>
+				                    <td>${item.pack}</td>
+				                    <td>${item.qty}</td>
+				                    <td>₹${item.price.toFixed(2)}</td>
+				                    <td><span class="badge bg-light text-dark border">${item.expiry}</span></td>
+				                    <td class="fw-bold">₹${itemTotal.toFixed(2)}</td>
+				                    <td>
+				                        <button class="btn btn-sm btn-outline-danger border-0" onclick="removeItem(${index})"><i class="fa-solid fa-trash"></i></button>
+				                    </td>
+				                </tr>
+				            `;
+				            tbody.insertAdjacentHTML('beforeend', row);
+				        });
 
-			        document.getElementById('subTotalDisplay').innerText = `₹${subTotal.toFixed(2)}`;
-			        document.getElementById('grandTotalDisplay').innerText = `₹${grandTotal.toFixed(2)}`;
-			    }
+				        const gstAmount = subTotal * (selectedGstPercentage / 100);
+				        const grandTotal = subTotal + gstAmount;
 
-			    function processInvoiceCheckout() {
-			        const custName = document.getElementById('custName').value.trim();
-			        const custPhone = document.getElementById('custPhone').value.trim();
-			        const mode = document.getElementById('paymentMode').value;
+				        const gstRowContainer = document.getElementById('gstRowContainer');
+				        const subTotalRowContainer = document.getElementById('subTotalRowContainer');
 
-			        if (!custName || !custPhone || custPhone.length !== 10) {
-			            alert("Kripya sahi Patient Name aur 10-digit Phone Number enter karein.");
-			            return;
-			        }
-			        if (currentBillItems.length === 0) {
-			            alert("Bill me kam se kam ek medicine add karein.");
-			            return;
-			        }
+				        if (selectedGstPercentage > 0) {
+				            gstRowContainer.style.setProperty('display', 'flex', 'important');
+				            subTotalRowContainer.style.setProperty('display', 'flex', 'important');
+				            document.getElementById('gstLabelDisplay').innerText = `GST Amount (${selectedGstPercentage}%):`;
+				            document.getElementById('gstAmountDisplay').innerText = `₹${gstAmount.toFixed(2)}`;
+				            document.getElementById('grandTotalLabelText').innerText = "Grand Total:";
+				        } else {
+				            gstRowContainer.style.setProperty('display', 'none', 'important');
+				            subTotalRowContainer.style.setProperty('display', 'none', 'important');
+				            document.getElementById('grandTotalLabelText').innerText = "Total:";
+				        }
 
-			        if (mode === 'Online') {
-			            generateQRCode();
-			            const qrModal = new bootstrap.Modal(document.getElementById('qrModal'));
-			            qrModal.show();
-			        } else {
-			            saveBillToFirebaseAndShowReceipt();
-			        }
-			    }
+				        document.getElementById('subTotalDisplay').innerText = `₹${subTotal.toFixed(2)}`;
+				        document.getElementById('grandTotalDisplay').innerText = `₹${grandTotal.toFixed(2)}`;
+				    }
 
-			    function generateQRCode() {
-			        const upiId = document.getElementById('upiSelect').value;
-			        const grandTotalStr = document.getElementById('grandTotalDisplay').innerText.replace('₹', '');
-			        document.getElementById('qrAmountDisplay').innerText = `₹${grandTotalStr}`;
-			        
-			        const qrcodeContainer = document.getElementById('qrcode');
-			        qrcodeContainer.innerHTML = "";
-			        
-			        const upiURI = `upi://pay?pa=${upiId}&pn=AmarMedicalStore&am=${grandTotalStr}&cu=INR`;
-			        new QRCode(qrcodeContainer, {
-			            text: upiURI,
-			            width: 180,
-			            height: 180
-			        });
-			    }
+				    function processInvoiceCheckout() {
+				        const custName = document.getElementById('custName').value.trim();
+				        const custPhone = document.getElementById('custPhone').value.trim();
+				        const mode = document.getElementById('paymentMode').value;
 
-			    function confirmOnlinePayment() {
-			        const alertBox = document.getElementById('onlineSuccessAlert');
-			        alertBox.classList.remove('d-none');
-			        
-			        setTimeout(() => {
-			            alertBox.classList.add('d-none');
-			            const qrModalEl = document.getElementById('qrModal');
-			            const modal = bootstrap.Modal.getInstance(qrModalEl);
-			            modal.hide();
+				        if (!custName || !custPhone || custPhone.length !== 10) {
+				            alert("Kripya sahi Patient Name aur 10-digit Phone Number enter karein.");
+				            return;
+				        }
+				        if (currentBillItems.length === 0) {
+				            alert("Bill me kam se kam ek medicine add karein.");
+				            return;
+				        }
 
-			            saveBillToFirebaseAndShowReceipt();
-			        }, 1000);
-			    }
+				        if (mode === 'Online') {
+				            generateQRCode();
+				            const qrModal = new bootstrap.Modal(document.getElementById('qrModal'));
+				            qrModal.show();
+				        } else {
+				            saveBillToFirebaseAndShowReceipt();
+				        }
+				    }
 
-			    async function saveBillToFirebaseAndShowReceipt() {
-			        const custName = document.getElementById('custName').value;
-			        const custPhone = document.getElementById('custPhone').value;
-			        const payMode = document.getElementById('paymentMode').value;
-			        const grandTotal = document.getElementById('grandTotalDisplay').innerText;
-			        const invNo = "#INV-" + Math.floor(1000 + Math.random() * 9000);
-			        const dateStr = new Date().toLocaleString();
+				    function generateQRCode() {
+				        const upiId = document.getElementById('upiSelect').value;
+				        const grandTotalStr = document.getElementById('grandTotalDisplay').innerText.replace('₹', '');
+				        document.getElementById('qrAmountDisplay').innerText = `₹${grandTotalStr}`;
+				        
+				        const qrcodeContainer = document.getElementById('qrcode');
+				        qrcodeContainer.innerHTML = "";
+				        
+				        const upiURI = `upi://pay?pa=${upiId}&pn=AmarMedicalStore&am=${grandTotalStr}&cu=INR`;
+				        new QRCode(qrcodeContainer, {
+				            text: upiURI,
+				            width: 180,
+				            height: 180
+				        });
+				    }
 
-			        try {
-			            await window.addDoc(window.collection(window.db, "sales"), {
-			                invoiceNo: invNo,
-			                customerName: custName,
-			                customerPhone: custPhone,
-			                paymentMode: payMode,
-			                items: currentBillItems,
-			                grandTotal: grandTotal,
-			                date: dateStr
-			            });
-			            console.log("Bill successfully saved to Firebase!");
-			        } catch (error) {
-			            console.error("Error saving bill to Firebase: ", error);
-			        }
+				    function confirmOnlinePayment() {
+				        const alertBox = document.getElementById('onlineSuccessAlert');
+				        alertBox.classList.remove('d-none');
+				        
+				        setTimeout(() => {
+				            alertBox.classList.add('d-none');
+				            const qrModalEl = document.getElementById('qrModal');
+				            const modal = bootstrap.Modal.getInstance(qrModalEl);
+				            modal.hide();
 
-			        document.getElementById('rInvoiceNo').innerText = invNo;
-			        document.getElementById('rCustName').innerText = custName;
-			        document.getElementById('rCustPhone').innerText = custPhone;
-			        document.getElementById('rDate').innerText = dateStr;
-			        document.getElementById('rPayMode').innerText = payMode;
+				            saveBillToFirebaseAndShowReceipt();
+				        }, 1000);
+				    }
 
-			        const rItemsList = document.getElementById('rItemsList');
-			        rItemsList.innerHTML = "";
+				    async function saveBillToFirebaseAndShowReceipt() {
+				        const custName = document.getElementById('custName').value;
+				        const custPhone = document.getElementById('custPhone').value;
+				        const payMode = document.getElementById('paymentMode').value;
+				        const grandTotal = document.getElementById('grandTotalDisplay').innerText;
+				        const invNo = "#INV-" + Math.floor(1000 + Math.random() * 9000);
+				        const dateStr = new Date().toLocaleString();
 
-			        currentBillItems.forEach((item, index) => {
-			            const itemTotal = (item.price * item.qty).toFixed(2);
-			            const rowHTML = `
-			                <tr>
-			                    <td class="text-center">${index + 1}</td>
-			                    <td class="text-start">${item.name}</td>
-			                    <td class="text-center">${item.pack}</td>
-			                    <td class="text-center">${item.qty}</td>
-			                    <td class="text-end">₹${item.price.toFixed(2)}</td>
-			                    <td class="text-center">${item.expiry}</td>
-			                    <td class="text-end">₹${itemTotal}</td>
-			                </tr>
-			            `;
-			            rItemsList.innerHTML += rowHTML;
-			        });
+				        try {
+				            await window.addDoc(window.collection(window.db, "sales"), {
+				                invoiceNo: invNo,
+				                customerName: custName,
+				                customerPhone: custPhone,
+				                paymentMode: payMode,
+				                items: currentBillItems,
+				                grandTotal: grandTotal,
+				                date: dateStr
+				            });
+				            console.log("Bill successfully saved to Firebase!");
+				        } catch (error) {
+				            console.error("Error saving bill to Firebase: ", error);
+				        }
 
-			        const selectedGstPercentage = parseFloat(document.getElementById('gstRateSelect').value) || 0;
-			        
-			        if (selectedGstPercentage > 0) {
-			            document.getElementById('rGstRow').style.display = "";
-			            document.getElementById('rSubTotalRow').style.display = "";
-			            document.getElementById('rGstLabel').innerText = `GST Tax (${selectedGstPercentage}%):`;
-			            
-			            const gstVal = document.getElementById('gstAmountDisplay').innerText;
-			            document.getElementById('rGst').innerText = gstVal;
-			            document.getElementById('rGrandTotalLabel').innerText = "Grand Total:";
-			        } else {
-			            document.getElementById('rGstRow').style.display = "none";
-			            document.getElementById('rSubTotalRow').style.display = "none";
-			            document.getElementById('rGrandTotalLabel').innerText = "Total:";
-			        }
+				        document.getElementById('rInvoiceNo').innerText = invNo;
+				        document.getElementById('rCustName').innerText = custName;
+				        document.getElementById('rCustPhone').innerText = custPhone;
+				        document.getElementById('rDate').innerText = dateStr;
+				        document.getElementById('rPayMode').innerText = payMode;
 
-			        const subTotVal = document.getElementById('subTotalDisplay').innerText;
-			        const grandTotVal = document.getElementById('grandTotalDisplay').innerText;
+				        const rItemsList = document.getElementById('rItemsList');
+				        rItemsList.innerHTML = "";
 
-			        document.getElementById('rSubTotal').innerText = subTotVal;
-			        document.getElementById('rGrandTotal').innerText = grandTotVal;
+				        currentBillItems.forEach((item, index) => {
+				            const itemTotal = (item.price * item.qty).toFixed(2);
+				            const rowHTML = `
+				                <tr>
+				                    <td class="text-center">${index + 1}</td>
+				                    <td class="text-start">${item.name}</td>
+				                    <td class="text-center">${item.pack}</td>
+				                    <td class="text-center">${item.qty}</td>
+				                    <td class="text-end">₹${item.price.toFixed(2)}</td>
+				                    <td class="text-center">${item.expiry}</td>
+				                    <td class="text-end">₹${itemTotal}</td>
+				                </tr>
+				            `;
+				            rItemsList.innerHTML += rowHTML;
+				        });
 
-			        const receiptModal = new bootstrap.Modal(document.getElementById('receiptModal'));
-			        receiptModal.show();
-			    }
-			</script>
-			</body>
-			</html>
+				        const selectedGstPercentage = parseFloat(document.getElementById('gstRateSelect').value) || 0;
+				        
+				        if (selectedGstPercentage > 0) {
+				            document.getElementById('rGstRow').style.display = "";
+				            document.getElementById('rSubTotalRow').style.display = "";
+				            document.getElementById('rGstLabel').innerText = `GST Tax (${selectedGstPercentage}%):`;
+				            
+				            const gstVal = document.getElementById('gstAmountDisplay').innerText;
+				            document.getElementById('rGst').innerText = gstVal;
+				            document.getElementById('rGrandTotalLabel').innerText = "Grand Total:";
+				        } else {
+				            document.getElementById('rGstRow').style.display = "none";
+				            document.getElementById('rSubTotalRow').style.display = "none";
+				            document.getElementById('rGrandTotalLabel').innerText = "Total:";
+				        }
+
+				        const subTotVal = document.getElementById('subTotalDisplay').innerText;
+				        const grandTotVal = document.getElementById('grandTotalDisplay').innerText;
+
+				        document.getElementById('rSubTotal').innerText = subTotVal;
+				        document.getElementById('rGrandTotal').innerText = grandTotVal;
+
+				        const receiptModal = new bootstrap.Modal(document.getElementById('receiptModal'));
+				        receiptModal.show();
+				    }
+				</script>
+				</body>
+				</html>
